@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
-import { Trash2, Plus, CheckCircle2, Circle, CalendarIcon, Flag, Star, Clock, Target, CheckSquare } from "lucide-react"
+import { CheckCircle2, Circle, CalendarIcon, Clock, ClipboardCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
+import Chart from "@/components/chart"
 
 interface Todo {
   id: number
@@ -18,99 +14,55 @@ interface Todo {
   completed: boolean
   createdAt: Date
   dueDate?: Date
+  description?: string
   priority: "low" | "medium" | "high"
   category: string
+  imgUrl?: string
   tags: string[]
 }
 
-const CATEGORIES = ["Personal", "Work", "Shopping", "Health", "Learning", "Other"]
 const PRIORITY_COLORS = {
   high: "bg-red-100 text-red-800 border-red-200",
   medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
   low: "bg-green-100 text-green-800 border-green-200",
 }
 
-export default function TodoApp() {
-  const [todos, setTodos] = useState<Todo[]>([])
-  const [inputValue, setInputValue] = useState("")
+export default function Dashboard() {
+  const [todos, setTodos] = useState<Todo[]>([
+    { id: 1, text: "Finish project report" ,completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg", description:"abcajdkjahdsjasdhajshdlkasjdlkjsdlkfjlskjflksdfjabcajdkjahdsjasdhajshdlkasjdlkjsdlkfjlskjflksdfjabcajdkjahdsjasdhajshdlkasjdlkjsdlkfjlskjflksdfjabcajdkjahdsjasdhajshdlkasjdlkjsdlkfjlskjflksdfj", createdAt: new Date(), dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), priority: "high", category: "Work", tags: ["work", "urgent"] },
+    { id: 2, text: "Grocery shopping", completed: true,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" ,createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), priority: "medium", category: "Personal", tags: ["personal"] },
+    { id: 3, text: "Book flight tickets", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), priority: "low", category: "Travel", tags: ["travel"] },
+    { id: 4, text: "Call the bank", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), priority: "high", category: "Finance", tags: ["finance", "urgent"] },
+    { id: 5, text: "Schedule dentist appointment", completed: true,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), priority: "medium", category: "Health", tags: ["health"] },
+    { id: 6, text: "Prepare presentation slides", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), priority: "high", category: "Work", tags: ["work"] },
+    { id: 7, text: "Renew car insurance", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), priority: "medium", category: "Finance", tags: ["finance"] },
+    { id: 8, text: "Plan weekend getaway", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(), priority: "low", category: "Personal", tags: ["personal", "travel"] },
+  ])
   const [searchQuery, setSearchQuery] = useState("")
-  const [filterCategory, setFilterCategory] = useState("all")
-  const [filterPriority, setFilterPriority] = useState("all")
-  const [selectedCategory, setSelectedCategory] = useState("Personal")
-  const [selectedPriority, setSelectedPriority] = useState<"low" | "medium" | "high">("medium")
-  const [dueDate, setDueDate] = useState<Date>()
-  const [activeView, setActiveView] = useState("all")
-  const [showAddForm, setShowAddForm] = useState(false)
 
   const isOverdue = (todo: Todo) => {
     return todo.dueDate && todo.dueDate < new Date() && !todo.completed
   }
 
+  // Get recent tasks (last 7 days, not completed)
+  const recentTasks = todos
+    .filter((todo) => {
+      const daysDiff = Math.floor((new Date().getTime() - todo.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+      return !todo.completed && daysDiff <= 7
+    })
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 8)
+
+  // Get completed tasks (most recently completed)
+  const completedTasks = todos
+    .filter((todo) => todo.completed)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 8)
+  const [date, setDate] = useState(new Date());
   useEffect(() => {
-    const savedTodos = localStorage.getItem("todos")
-    if (savedTodos) {
-      const parsedTodos = JSON.parse(savedTodos).map((todo: any) => ({
-        ...todo,
-        createdAt: new Date(todo.createdAt),
-        dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined,
-      }))
-      setTodos(parsedTodos)
-    }
-  }, [])
-
-  useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos))
-  }, [todos])
-
-  const addTodo = () => {
-    if (inputValue.trim() !== "") {
-      const newTodo: Todo = {
-        id: Date.now(),
-        text: inputValue.trim(),
-        completed: false,
-        createdAt: new Date(),
-        dueDate,
-        priority: selectedPriority,
-        category: selectedCategory,
-        tags: [],
-      }
-      setTodos([newTodo, ...todos])
-      setInputValue("")
-      setDueDate(undefined)
-      setShowAddForm(false)
-    }
-  }
-
-  const toggleTodo = (id: number) => {
-    setTodos(todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)))
-  }
-
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id))
-  }
-
-  const markAllCompleted = () => {
-    setTodos(todos.map((todo) => ({ ...todo, completed: true })))
-  }
-
-  const deleteCompleted = () => {
-    setTodos(todos.filter((todo) => !todo.completed))
-  }
-
-  const filteredTodos = todos.filter((todo) => {
-    const matchesSearch = todo.text.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = filterCategory === "all" || todo.category === filterCategory
-    const matchesPriority = filterPriority === "all" || todo.priority === filterPriority
-
-    let matchesView = true
-    if (activeView === "pending") matchesView = !todo.completed
-    else if (activeView === "completed") matchesView = todo.completed
-    else if (activeView === "overdue") matchesView = !!isOverdue(todo)
-    else if (activeView === "high-priority") matchesView = todo.priority === "high" && !todo.completed
-
-    return matchesSearch && matchesCategory && matchesPriority && matchesView
-  })
-
+    const timer = setInterval(() => setDate(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, [date]);
   const stats = {
     total: todos.length,
     completed: todos.filter((t) => t.completed).length,
@@ -119,224 +71,172 @@ export default function TodoApp() {
     highPriority: todos.filter((t) => t.priority === "high" && !t.completed).length,
   }
 
+
+  const completed = todos.filter((t) => t.completed).length
+  const inProgress = todos.filter((t) => !t.completed && t.dueDate).length
+
+  const data = [
+    { name: "Completed", value: completed, color: "#22c55e" }, // xanh lá
+    { name: "In Progress", value: inProgress, color: "#3b82f6" }, // xanh dương
+  ]
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
-      <Sidebar stats={stats} activeView={activeView} onViewChange={setActiveView} />
+      <Sidebar stats={stats} activeView="dashboard" onViewChange={(e) => {console.log(e)}} />
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} onAddTask={() => setShowAddForm(true)} />
+        <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} onAddTask={() => {}} />
 
-        <main className="flex-1 p-6">
-          {/* Stats Cards */}
-          <div className="grid lg:grid-cols-3 gap-6">
-            {showAddForm && (
-              <div className="lg:col-span-1">
-                <Card className="bg-white/90 backdrop-blur border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Plus className="w-5 h-5" />
-                        Add New Task
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowAddForm(false)}
-                        className="text-slate-400 hover:text-slate-600"
-                      >
-                        ×
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Input
-                      placeholder="What needs to be done?"
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && addTodo()}
-                      className="bg-white border-slate-200"
-                    />
+        <main className="flex-1 pt-6 pb-8 pl-14 pr-6 lg:pl-20 lg:pr-16 overflow-y-auto">
+          {/* Dashboard Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
+            <p className="text-slate-600">Overview of your recent and completed tasks</p>
+          </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CATEGORIES.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+          {/* Stats Overview */}
 
-                      <Select
-                        value={selectedPriority}
-                        onValueChange={(value: "low" | "medium" | "high") => setSelectedPriority(value)}
-                      >
-                        <SelectTrigger className="bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low Priority</SelectItem>
-                          <SelectItem value="medium">Medium Priority</SelectItem>
-                          <SelectItem value="high">High Priority</SelectItem>
-                        </SelectContent>
-                      </Select>
+          {/* Main Dashboard Content */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Recent Tasks - Left Side */}
+            <Card className="bg-white/90 backdrop-blur row-span-2 border-0 shadow-lg">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                  <Clock className="w-5 h-5 text-slate-600" />
+                  Recent Tasks
+                  <Badge variant="secondary" className="ml-auto h-full max-h-24">
+                    <p className="text-xl">To do</p>
+                    <ClipboardCheck className="h-full max-h-24" />
+                  </Badge>
+                </CardTitle>
+                <p className="text-sm text-slate-500">
+                  {date.toLocaleDateString(undefined, {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </CardHeader>
+
+              <CardContent>
+                <div className="space-y-3 max-h overflow-y-auto pr-1">
+                  {recentTasks.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Clock className="w-8 h-8 text-slate-400 mx-auto mb-3" />
+                      <p className="text-slate-500">No recent tasks</p>
                     </div>
+                  ) : (
+                    recentTasks.map((todo) => (
+                      <div
+                        key={todo.id}
+                        className={cn(
+                          "flex items-start gap-3 p-3 rounded-lg border transition-all duration-200 hover:bg-slate-50 hover:shadow-sm cursor-pointer",
+                          todo.priority === "high" && "border-l-4 border-l-red-500",
+                          todo.priority === "medium" && "border-l-4 border-l-yellow-500",
+                          todo.priority === "low" && "border-l-4 border-l-green-500",
+                          isOverdue(todo) && "bg-red-50 border-l-red-600"
+                        )}
+                      >
+                        <Circle className="w-4 h-4 text-slate-400 mt-1 flex-shrink-0" />
 
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start bg-white">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dueDate ? format(dueDate, "PPP") : "Set due date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Button onClick={addTodo} className="w-full bg-slate-900 hover:bg-slate-800">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Task
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {todos.length > 0 && (
-                  <Card className="bg-white/90 backdrop-blur border-0 shadow-lg mt-6">
-                    <CardHeader>
-                      <CardTitle className="text-sm">Bulk Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <Button variant="outline" onClick={markAllCompleted} className="w-full text-sm bg-transparent">
-                        <CheckSquare className="w-4 h-4 mr-2" />
-                        Mark All Complete
-                      </Button>
-                      <Button variant="outline" onClick={deleteCompleted} className="w-full text-sm bg-transparent">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete Completed
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {/* Tasks List */}
-            <div className={cn("lg:col-span-2", !showAddForm && "lg:col-span-3")}>
-              <Card className="bg-white/90 backdrop-blur border-0 shadow-lg">
-                <CardHeader>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex gap-2 ml-auto">
-                      <Select value={filterCategory} onValueChange={setFilterCategory}>
-                        <SelectTrigger className="w-32 bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Categories</SelectItem>
-                          {CATEGORIES.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select value={filterPriority} onValueChange={setFilterPriority}>
-                        <SelectTrigger className="w-32 bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Priorities</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="low">Low</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {filteredTodos.length === 0 ? (
-                      <div className="text-center py-12">
-                        <CheckCircle2 className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-slate-600 mb-2">No tasks found</h3>
-                        <p className="text-slate-500">Try adjusting your filters or add a new task</p>
-                      </div>
-                    ) : (
-                      filteredTodos.map((todo) => (
-                        <Card
-                          key={todo.id}
-                          className={cn(
-                            "transition-all duration-200 hover:shadow-md border-l-4",
-                            todo.completed && "opacity-60",
-                            todo.priority === "high" && "border-l-red-500",
-                            todo.priority === "medium" && "border-l-yellow-500",
-                            todo.priority === "low" && "border-l-green-500",
-                            isOverdue(todo) && "bg-red-50 border-l-red-600",
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {todo.text}
+                          </p>
+                          {todo.description && (
+                            <p className="text-xs flex-wrap break-words whitespace-normal text-slate-500 mt-0.5 line-clamp-2">
+                              {todo.description}
+                            </p>
                           )}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
-                              <button
-                                onClick={() => toggleTodo(todo.id)}
-                                className="flex-shrink-0 mt-1 transition-colors hover:text-slate-700"
+                          <div className="flex flex-wrap items-center gap-2 mt-5">
+                            <Badge variant="secondary" className="text-xs">
+                              {todo.category}
+                            </Badge>
+                            <Badge
+                              className={cn("text-xs capitalize", PRIORITY_COLORS[todo.priority])}
+                            >
+                              {todo.priority}
+                            </Badge>
+                            {todo.dueDate && (
+                              <Badge
+                                variant={isOverdue(todo) ? "destructive" : "outline"}
+                                className="text-xs"
                               >
-                                {todo.completed ? (
-                                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                                ) : (
-                                  <Circle className="w-5 h-5 text-slate-400" />
+                                <CalendarIcon className="w-3 h-3 mr-1" />
+                                {format(todo.dueDate, "MMM dd")}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {todo.imgUrl && (
+                          <img
+                            src={todo.imgUrl}
+                            alt="Task"
+                            className="w-20 h-20 object-cover rounded-md flex-shrink-0"
+                          />
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Chart data={data}></Chart>
+
+            {/* Completed Tasks - Right Side */}
+            <Card className="bg-white/90 backdrop-blur border-0 shadow-lg lg:col-start-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  Completed Tasks
+                  <Badge variant="secondary" className="ml-auto">
+                    {completedTasks.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {completedTasks.length === 0 ? (
+                    <div className="text-center py-8">
+                      <CheckCircle2 className="w-8 h-8 text-slate-400 mx-auto mb-3" />
+                      <p className="text-slate-500">No completed tasks yet</p>
+                    </div>
+                  ) : (
+                    completedTasks.map((todo) => (
+                      <Card
+                        key={todo.id}
+                        className="transition-all duration-200 hover:shadow-md border-l-4 border-l-green-500 opacity-75 cursor-pointer"
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-600 line-through truncate">{todo.text}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="secondary" className="text-xs opacity-75">
+                                  {todo.category}
+                                </Badge>
+                                <Badge className={cn("text-xs opacity-75", PRIORITY_COLORS[todo.priority])}>
+                                  {todo.priority}
+                                </Badge>
+                                {todo.dueDate && (
+                                  <Badge variant="outline" className="text-xs opacity-75">
+                                    <CalendarIcon className="w-3 h-3 mr-1" />
+                                    {format(todo.dueDate, "MMM dd")}
+                                  </Badge>
                                 )}
-                              </button>
-
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2">
-                                  <span
-                                    className={cn(
-                                      "text-slate-900 transition-all font-medium",
-                                      todo.completed && "line-through text-slate-500",
-                                    )}
-                                  >
-                                    {todo.text}
-                                  </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => deleteTodo(todo.id)}
-                                    className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-
-                                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                  <Badge variant="secondary" className="text-xs">
-                                    {todo.category}
-                                  </Badge>
-                                  <Badge className={cn("text-xs", PRIORITY_COLORS[todo.priority])}>
-                                    {todo.priority}
-                                  </Badge>
-                                  {todo.dueDate && (
-                                    <Badge variant={isOverdue(todo) ? "destructive" : "outline"} className="text-xs">
-                                      <CalendarIcon className="w-3 h-3 mr-1" />
-                                      {format(todo.dueDate, "MMM dd")}
-                                    </Badge>
-                                  )}
-                                </div>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>

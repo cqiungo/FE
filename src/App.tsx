@@ -15,7 +15,7 @@ function App() {
         <Route path="/dashboard" element={<BoardPage />}>
           {/* Add more nested routes here */}
         </Route>
-        <Route path="/" element={<Intro />}>
+        <Route path="/boardpage" element={<Dashboard />}>
           {/* Add more nested routes here */}
         </Route>
       </Routes>

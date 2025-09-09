@@ -24,8 +24,8 @@ export function Header({ searchQuery, onSearchChange, onAddTask }: HeaderProps) 
         {/* Left Section - Title and Search */}
         <div className="flex items-center gap-6">
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent">
-              TaskMaster Pro
+            <h1 className="text-2xl flex font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent">
+              <p className="text-cyan-600">Task</p> Master Pro
             </h1>
             <p className="text-sm text-slate-500">Advanced task management</p>
           </div>

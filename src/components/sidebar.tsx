@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Home, CheckSquare, Flag, Star, Settings, BarChart3, Menu, X, ClipboardList } from "lucide-react"
+import { Home, CheckSquare, Flag, Star, Settings, BarChart3, Menu, X, ClipboardList, Users, History } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useNavigate } from "react-router-dom"
 
 interface SidebarProps {
   stats: {
@@ -18,21 +19,20 @@ interface SidebarProps {
 
 export function Sidebar({ stats, activeView, onViewChange }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const navigate = useNavigate()
 
   const menuItems = [
     { id: "dashboard", label: "Dash Board", icon: ClipboardList, count: 0},
-    { id: "all", label: "All Tasks", icon: Home, count: stats.total },
-    { id: "pending", label: "Pending", icon: CheckSquare, count: stats.pending },
-    { id: "completed", label: "Completed", icon: CheckSquare, count: stats.completed },
-    { id: "overdue", label: "Overdue", icon: Flag, count: stats.overdue },
-    { id: "high-priority", label: "High Priority", icon: Star, count: stats.highPriority },
+    { id: "boardpage", label: "All Tasks", icon: Home, count: stats.total },
+    { id: "group", label: "Group", icon: Users, count: 0 },
+    { id: "history", label: "History", icon: History, count: 0 },
   ]
 
   return (
     <div
       className={cn(
         "bg-white/95 backdrop-blur border-r border-slate-200 transition-all duration-300 flex flex-col",
-        isCollapsed ? "w-16" : "w-64",
+        isCollapsed ? "w-16" : "w-100",
       )}
     >
       {/* Sidebar Header */}
@@ -40,7 +40,7 @@ export function Sidebar({ stats, activeView, onViewChange }: SidebarProps) {
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div>
-              <h2 className="font-semibold text-slate-900">TaskMaster</h2>
+              <h2 className="font-semibold text-slate-900 flex"><p className="text-cyan-600">Task</p> Master Pro</h2>
               <p className="text-xs text-slate-500">Pro Dashboard</p>
             </div>
           )}
@@ -68,7 +68,10 @@ export function Sidebar({ stats, activeView, onViewChange }: SidebarProps) {
             ? "bg-slate-900 text-white"
             : "text-slate-600 hover:text-slate-900 hover:bg-slate-50",
         )}
-        onClick={() => onViewChange(item.id)}
+        onClick={() =>{
+          onViewChange(item.id)
+          navigate(`/${item.id}`)
+        }}
       >
         <item.icon className={cn("w-4 h-4", !isCollapsed && "mr-3")} />
         {!isCollapsed && (

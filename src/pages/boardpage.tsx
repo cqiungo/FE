@@ -12,13 +12,12 @@ interface Todo {
   id: number
   text: string
   completed: boolean
-  createdAt: Date
-  dueDate?: Date
+  start: Date
+  end?: Date
   description?: string
   priority: "low" | "medium" | "high"
   category: string
   imgUrl?: string
-  tags: string[]
 }
 
 const PRIORITY_COLORS = {
@@ -29,34 +28,31 @@ const PRIORITY_COLORS = {
 
 export default function Dashboard() {
   const [todos, setTodos] = useState<Todo[]>([
-    { id: 1, text: "Finish project report" ,completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg", description:"abcajdkjahdsjasdhajshdlkasjdlkjsdlkfjlskjflksdfjabcajdkjahdsjasdhajshdlkasjdlkjsdlkfjlskjflksdfjabcajdkjahdsjasdhajshdlkasjdlkjsdlkfjlskjflksdfjabcajdkjahdsjasdhajshdlkasjdlkjsdlkfjlskjflksdfj", createdAt: new Date(), dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), priority: "high", category: "Work", tags: ["work", "urgent"] },
-    { id: 2, text: "Grocery shopping", completed: true,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" ,createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), priority: "medium", category: "Personal", tags: ["personal"] },
-    { id: 3, text: "Book flight tickets", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), priority: "low", category: "Travel", tags: ["travel"] },
-    { id: 4, text: "Call the bank", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), priority: "high", category: "Finance", tags: ["finance", "urgent"] },
-    { id: 5, text: "Schedule dentist appointment", completed: true,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), priority: "medium", category: "Health", tags: ["health"] },
-    { id: 6, text: "Prepare presentation slides", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), priority: "high", category: "Work", tags: ["work"] },
-    { id: 7, text: "Renew car insurance", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), priority: "medium", category: "Finance", tags: ["finance"] },
-    { id: 8, text: "Plan weekend getaway", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , createdAt: new Date(), priority: "low", category: "Personal", tags: ["personal", "travel"] },
-  ])
+      { id: 1, text: "Finish project report" ,completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg", description:"", start: new Date(new Date(new Date().setHours(9)).setMinutes(0)),    end: new Date(new Date(new Date().setHours(10)).setMinutes(0)), priority: "high", category: "Work" },
+      { id: 2, text: "Grocery shopping", completed: true,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" ,start:new Date(2025, 8, 15, 14, 30, 45),end: new Date(2025,8,15,20,0,0), priority: "medium", category: "Personal",  },
+      { id: 3, text: "Book flight tickets", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , start: new Date(2025,9,11,1,0,0), end: new Date(2025,9,11,5,0,0), priority: "low", category: "Travel"},
+      { id: 4, text: "Call the bank", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , start: new Date(2025,9,11,1,0,0), end: new Date(2025,9,11,5,0,0), priority: "high", category: "Finance"},
+      { id: 5, text: "Schedule dentist appointment", completed: true,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , start: new Date(2025,9,12,1,0,0), end: new Date(2025,9,12,5,0,0), priority: "medium", category: "Health"},
+    ])
   const [searchQuery, setSearchQuery] = useState("")
-
+    
   const isOverdue = (todo: Todo) => {
-    return todo.dueDate && todo.dueDate < new Date() && !todo.completed
+    return todo.end && todo.end < new Date() && !todo.completed
   }
 
   // Get recent tasks (last 7 days, not completed)
   const recentTasks = todos
     .filter((todo) => {
-      const daysDiff = Math.floor((new Date().getTime() - todo.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+      const daysDiff = Math.floor((new Date().getTime() - todo.start.getTime()) / (1000 * 60 * 60 * 24))
       return !todo.completed && daysDiff <= 7
     })
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .sort((a, b) => b.start.getTime() - a.start.getTime())
     .slice(0, 8)
 
   // Get completed tasks (most recently completed)
   const completedTasks = todos
     .filter((todo) => todo.completed)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .sort((a, b) => b.start.getTime() - a.start.getTime())
     .slice(0, 8)
   const [date, setDate] = useState(new Date());
   useEffect(() => {
@@ -67,13 +63,13 @@ export default function Dashboard() {
     total: todos.length,
     completed: todos.filter((t) => t.completed).length,
     pending: todos.filter((t) => !t.completed).length,
-    overdue: todos.filter((t) => t.dueDate && t.dueDate < new Date() && !t.completed).length,
+    overdue: todos.filter((t) => t.end && t.end < new Date() && !t.completed).length,
     highPriority: todos.filter((t) => t.priority === "high" && !t.completed).length,
   }
 
 
   const completed = todos.filter((t) => t.completed).length
-  const inProgress = todos.filter((t) => !t.completed && t.dueDate).length
+  const inProgress = todos.filter((t) => !t.completed && t.end).length
 
   const data = [
     { name: "Completed", value: completed, color: "#22c55e" }, // xanh lá
@@ -157,13 +153,13 @@ export default function Dashboard() {
                             >
                               {todo.priority}
                             </Badge>
-                            {todo.dueDate && (
+                            {todo.end && (
                               <Badge
                                 variant={isOverdue(todo) ? "destructive" : "outline"}
                                 className="text-xs"
                               >
                                 <CalendarIcon className="w-3 h-3 mr-1" />
-                                {format(todo.dueDate, "MMM dd")}
+                                {format(todo.end, "MMM dd")}
                               </Badge>
                             )}
                           </div>
@@ -221,10 +217,10 @@ export default function Dashboard() {
                                 <Badge className={cn("text-xs opacity-75", PRIORITY_COLORS[todo.priority])}>
                                   {todo.priority}
                                 </Badge>
-                                {todo.dueDate && (
+                                {todo.end && (
                                   <Badge variant="outline" className="text-xs opacity-75">
                                     <CalendarIcon className="w-3 h-3 mr-1" />
-                                    {format(todo.dueDate, "MMM dd")}
+                                    {format(todo.end, "MMM dd")}
                                   </Badge>
                                 )}
                               </div>

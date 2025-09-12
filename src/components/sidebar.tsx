@@ -1,31 +1,23 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Home, CheckSquare, Flag, Star, Settings, BarChart3, Menu, X, ClipboardList, Users, History } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useNavigate } from "react-router-dom"
 
 interface SidebarProps {
-  stats: {
-    total: number
-    completed: number
-    pending: number
-    overdue: number
-    highPriority: number
-  }
   activeView: string
   onViewChange: (view: string) => void
 }
 
-export function Sidebar({ stats, activeView, onViewChange }: SidebarProps) {
+export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const navigate = useNavigate()
 
   const menuItems = [
-    { id: "dashboard", label: "Dash Board", icon: ClipboardList, count: 0},
-    { id: "boardpage", label: "All Tasks", icon: Home, count: stats.total },
-    { id: "group", label: "Group", icon: Users, count: 0 },
-    { id: "history", label: "History", icon: History, count: 0 },
+    { id: "dashboard", label: "Dash Board", icon: ClipboardList, },
+    { id: "boardpage", label: "All Tasks", icon: Home},
+    { id: "group", label: "Group", icon: Users},
+    { id: "history", label: "History", icon: History},
   ]
 
   return (
@@ -77,11 +69,6 @@ export function Sidebar({ stats, activeView, onViewChange }: SidebarProps) {
         {!isCollapsed && (
           <>
             <span className="flex-1">{item.label}</span>
-            {item.count > 0 && (
-              <Badge variant={activeView === item.id ? "secondary" : "outline"} className="mx-auto text-xs">
-                {item.count}
-              </Badge>
-            )}
           </>
         )}
       </Button>

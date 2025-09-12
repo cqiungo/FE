@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
-import { Trash2, Plus, CheckCircle2, Circle, CalendarIcon, Flag, Star, Clock, Target, CheckSquare } from "lucide-react"
+import { Trash2, CheckCircle2, Circle, CalendarIcon, CheckSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import StatsCard from "@/components/ui/stats-card"
+import AddTask from "@/components/ui/add-task-dialog"
 interface Todo {
   id: number
   text: string
@@ -20,7 +20,6 @@ interface Todo {
   dueDate?: Date
   priority: "low" | "medium" | "high"
   category: string
-  tags: string[]
 }
 
 const CATEGORIES = ["Personal", "Work", "Shopping", "Health", "Learning", "Other"]
@@ -32,16 +31,16 @@ const PRIORITY_COLORS = {
 
 export default function TodoApp() {
   const [todos, setTodos] = useState<Todo[]>([])
-  const [inputValue, setInputValue] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [filterCategory, setFilterCategory] = useState("all")
   const [filterPriority, setFilterPriority] = useState("all")
-  const [selectedCategory, setSelectedCategory] = useState("Personal")
-  const [selectedPriority, setSelectedPriority] = useState<"low" | "medium" | "high">("medium")
-  const [dueDate, setDueDate] = useState<Date>()
   const [activeView, setActiveView] = useState("all")
   const [showAddForm, setShowAddForm] = useState(false)
-
+  dayjs.extend(customParseFormat);
+  const addTodo = (todo: Todo) => {
+    setTodos([todo, ...todos])
+    setShowAddForm(false)
+  }
   const isOverdue = (todo: Todo) => {
     return todo.dueDate && todo.dueDate < new Date() && !todo.completed
   }
@@ -61,26 +60,6 @@ export default function TodoApp() {
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos))
   }, [todos])
-
-  const addTodo = () => {
-    if (inputValue.trim() !== "") {
-      const newTodo: Todo = {
-        id: Date.now(),
-        text: inputValue.trim(),
-        completed: false,
-        createdAt: new Date(),
-        dueDate,
-        priority: selectedPriority,
-        category: selectedCategory,
-        tags: [],
-      }
-      setTodos([newTodo, ...todos])
-      setInputValue("")
-      setDueDate(undefined)
-      setShowAddForm(false)
-    }
-  }
-
   const toggleTodo = (id: number) => {
     setTodos(todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)))
   }
@@ -121,7 +100,7 @@ export default function TodoApp() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
-      <Sidebar stats={stats} activeView={activeView} onViewChange={setActiveView} />
+      <Sidebar activeView={activeView} onViewChange={setActiveView} />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
@@ -129,120 +108,12 @@ export default function TodoApp() {
 
         <main className="flex-1 p-6">
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <Card className="bg-white/80 backdrop-blur border-0 shadow-sm">
-              <CardContent className="p-4 text-center">
-                <Target className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
-                <div className="text-sm text-slate-600">Total Tasks</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/80 backdrop-blur border-0 shadow-sm">
-              <CardContent className="p-4 text-center">
-                <CheckCircle2 className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-slate-900">{stats.completed}</div>
-                <div className="text-sm text-slate-600">Completed</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/80 backdrop-blur border-0 shadow-sm">
-              <CardContent className="p-4 text-center">
-                <Clock className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-slate-900">{stats.pending}</div>
-                <div className="text-sm text-slate-600">Pending</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/80 backdrop-blur border-0 shadow-sm">
-              <CardContent className="p-4 text-center">
-                <Flag className="w-6 h-6 text-red-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-slate-900">{stats.overdue}</div>
-                <div className="text-sm text-slate-600">Overdue</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-white/80 backdrop-blur border-0 shadow-sm">
-              <CardContent className="p-4 text-center">
-                <Star className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-slate-900">{stats.highPriority}</div>
-                <div className="text-sm text-slate-600">High Priority</div>
-              </CardContent>
-            </Card>
-          </div>
+          <StatsCard stats={stats} />
 
           <div className="grid lg:grid-cols-3 gap-6">
             {showAddForm && (
               <div className="lg:col-span-1">
-                <Card className="bg-white/90 backdrop-blur border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Plus className="w-5 h-5" />
-                        Add New Task
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowAddForm(false)}
-                        className="text-slate-400 hover:text-slate-600"
-                      >
-                        ×
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Input
-                      placeholder="What needs to be done?"
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && addTodo()}
-                      className="bg-white border-slate-200"
-                    />
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CATEGORIES.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={selectedPriority}
-                        onValueChange={(value: "low" | "medium" | "high") => setSelectedPriority(value)}
-                      >
-                        <SelectTrigger className="bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low Priority</SelectItem>
-                          <SelectItem value="medium">Medium Priority</SelectItem>
-                          <SelectItem value="high">High Priority</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start bg-white">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dueDate ? format(dueDate, "PPP") : "Set due date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Button onClick={addTodo} className="w-full bg-slate-900 hover:bg-slate-800">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Task
-                    </Button>
-                  </CardContent>
-                </Card>
+                <AddTask setShowAddForm={setShowAddForm} onAdd={addTodo} />
 
                 {todos.length > 0 && (
                   <Card className="bg-white/90 backdrop-blur border-0 shadow-lg mt-6">

@@ -1,27 +1,20 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
-import { Trash2, CheckCircle2, Circle, CalendarIcon, CheckSquare } from "lucide-react"
+import { Trash2, CheckCircle2, Circle, CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import StatsCard from "@/components/ui/stats-card"
 import AddTask from "@/components/ui/add-task-dialog"
-interface Todo {
-  id: number
-  text: string
-  completed: boolean
-  createdAt: Date
-  dueDate?: Date
-  priority: "low" | "medium" | "high"
-  category: string
-}
-
+import type { Todo, Priority } from "@/types/todo.type"
+import { useAuthContext } from "@/context/authContext"
+import Dialog from "@/components/ui/confirm-dialog"
 const CATEGORIES = ["Personal", "Work", "Shopping", "Health", "Learning", "Other"]
 const PRIORITY_COLORS = {
   high: "bg-red-100 text-red-800 border-red-200",
@@ -36,26 +29,60 @@ export default function TodoApp() {
   const [filterPriority, setFilterPriority] = useState("all")
   const [activeView, setActiveView] = useState("all")
   const [showAddForm, setShowAddForm] = useState(false)
+  const [openDialog, setOpenDialog] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
   dayjs.extend(customParseFormat);
+  const {user} =useAuthContext()
   const addTodo = (todo: Todo) => {
     setTodos([todo, ...todos])
     setShowAddForm(false)
   }
-  const isOverdue = (todo: Todo) => {
-    return todo.dueDate && todo.dueDate < new Date() && !todo.completed
-  }
-
+  const handleOpenDialog = (id: string) => {
+    setSelectedId(id)
+    setOpenDialog(true)
+  } 
   useEffect(() => {
-    const savedTodos = localStorage.getItem("todos")
-    if (savedTodos) {
-      const parsedTodos = JSON.parse(savedTodos).map((todo: any) => ({
-        ...todo,
-        createdAt: new Date(todo.createdAt),
-        dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined,
-      }))
-      setTodos(parsedTodos)
-    }
-  }, [])
+      const fetchTodos = async () => {
+        try {
+          const res = await fetch(`http://localhost:3000/user/${user!.id}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`,
+            },
+          });
+  
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          const data = await res.json();
+          const fetchedTodos = data.todos || [];
+  
+          // map và gán id tăng dần từ 0
+          const mappedTodos: Todo[] = fetchedTodos.map((todo: any, index: number) => ({
+            id: index,
+            todo_id:todo._id,
+            title: todo.title,
+            description: todo.description,
+            completed: todo.completed,
+            priority: todo.priority as Priority,
+            category: todo.category,
+            image: todo.image,
+            start: new Date(todo.start),
+            end: new Date(todo.end),
+            actualTime: new Date(todo.actual || todo.start),
+          }));
+  
+          setTodos(mappedTodos);
+        } catch (err) {
+          console.error("Fetch error:", err);
+        }
+      };
+  
+      fetchTodos();
+    });
+  const isOverdue = (todo: Todo) => {
+    return todo.end && todo.end < new Date() && !todo.completed
+  }
 
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos))
@@ -77,7 +104,8 @@ export default function TodoApp() {
   }
 
   const filteredTodos = todos.filter((todo) => {
-    const matchesSearch = todo.text.toLowerCase().includes(searchQuery.toLowerCase())
+
+    const matchesSearch = (todo.title ?? "").toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = filterCategory === "all" || todo.category === filterCategory
     const matchesPriority = filterPriority === "all" || todo.priority === filterPriority
 
@@ -94,12 +122,17 @@ export default function TodoApp() {
     total: todos.length,
     completed: todos.filter((t) => t.completed).length,
     pending: todos.filter((t) => !t.completed).length,
-    overdue: todos.filter((t) => t.dueDate && t.dueDate < new Date() && !t.completed).length,
+    overdue: todos.filter((t) => t.end && t.end < new Date() && !t.completed).length,
     highPriority: todos.filter((t) => t.priority === "high" && !t.completed).length,
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
+      <Dialog
+        id={selectedId || ""}
+        open={openDialog}
+        onOpen={setOpenDialog}
+      />
       <Sidebar activeView={activeView} onViewChange={setActiveView} />
 
       {/* Main Content */}
@@ -113,31 +146,13 @@ export default function TodoApp() {
           <div className="grid lg:grid-cols-3 gap-6">
             {showAddForm && (
               <div className="lg:col-span-1">
-                <AddTask setShowAddForm={setShowAddForm} onAdd={addTodo} />
-
-                {todos.length > 0 && (
-                  <Card className="bg-white/90 backdrop-blur border-0 shadow-lg mt-6">
-                    <CardHeader>
-                      <CardTitle className="text-sm">Bulk Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <Button variant="outline" onClick={markAllCompleted} className="w-full text-sm bg-transparent">
-                        <CheckSquare className="w-4 h-4 mr-2" />
-                        Mark All Complete
-                      </Button>
-                      <Button variant="outline" onClick={deleteCompleted} className="w-full text-sm bg-transparent">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete Completed
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+                <AddTask setShowAddForm={setShowAddForm} onAdd={addTodo}/>
               </div>
             )}
 
             {/* Tasks List */}
             <div className={cn("lg:col-span-2", !showAddForm && "lg:col-span-3")}>
-              <Card className="bg-white/90 backdrop-blur border-0 shadow-lg">
+              <Card className="bg-white/90 h-full backdrop-blur border-0 shadow-lg">
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex gap-2 ml-auto">
@@ -210,12 +225,12 @@ export default function TodoApp() {
                                       todo.completed && "line-through text-slate-500",
                                     )}
                                   >
-                                    {todo.text}
+                                    {todo.title}
                                   </span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => deleteTodo(todo.id)}
+                                    onClick={() => handleOpenDialog(todo.todo_id)}
                                     className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -229,10 +244,10 @@ export default function TodoApp() {
                                   <Badge className={cn("text-xs", PRIORITY_COLORS[todo.priority])}>
                                     {todo.priority}
                                   </Badge>
-                                  {todo.dueDate && (
+                                  {todo.end && (
                                     <Badge variant={isOverdue(todo) ? "destructive" : "outline"} className="text-xs">
                                       <CalendarIcon className="w-3 h-3 mr-1" />
-                                      {format(todo.dueDate, "MMM dd")}
+                                      {format(todo.end, "MMM dd")}
                                     </Badge>
                                   )}
                                 </div>

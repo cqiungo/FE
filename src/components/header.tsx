@@ -9,8 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAuthContext } from "@/context/authContext"
 import { Bell, Search, Plus, User, LogOut, Settings } from "lucide-react"
-
 interface HeaderProps {
   searchQuery: string
   onSearchChange: (query: string) => void
@@ -18,6 +18,7 @@ interface HeaderProps {
 }
 
 export function Header({ searchQuery, onSearchChange, onAddTask }: HeaderProps) {
+  const {user} =useAuthContext();
   return (
     <header className="bg-white/95 backdrop-blur border-b border-slate-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -56,7 +57,7 @@ export function Header({ searchQuery, onSearchChange, onAddTask }: HeaderProps) 
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/user-avatar.jpg" alt="User" />
+                  <AvatarImage src="https://www.kindpng.com/picc/m/22-223863_no-avatar-png-circle-transparent-png.png" alt="User" />
                   <AvatarFallback>JD</AvatarFallback>
                 </Avatar>
               </Button>
@@ -64,8 +65,8 @@ export function Header({ searchQuery, onSearchChange, onAddTask }: HeaderProps) 
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">John Doe</p>
-                  <p className="text-xs leading-none text-muted-foreground">john@example.com</p>
+                  <p className="text-sm font-medium leading-none">{user?.name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

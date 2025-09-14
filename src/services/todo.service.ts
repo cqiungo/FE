@@ -1,8 +1,8 @@
 // src/services/auth.service.ts
 import { authApi } from "../api/auth.api";
-import type { LoginRequest, LoginResponse, RegisterRequest } from "../types/auth.type";
-
-export const authService = {
+import type { LoginRequest, LoginResponse } from "../types/auth.type";
+import { userApi } from "@/api/user.api";
+export const todoService = {
   async login(data: LoginRequest) {
     const res: LoginResponse = await authApi.login(data);
 
@@ -13,8 +13,8 @@ export const authService = {
     return res;
   },
 
-  async register(data: RegisterRequest) {
-    return authApi.register(data);
+  async getTodoList(id: string) {
+    return await userApi.getToDolistByUser(id);
   },
 
   logout() {

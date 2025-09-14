@@ -15,7 +15,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
 
   const menuItems = [
     { id: "dashboard", label: "Dash Board", icon: ClipboardList, },
-    { id: "boardpage", label: "All Tasks", icon: Home},
+    { id: "taskview", label: "All Tasks", icon: Home},
     { id: "group", label: "Group", icon: Users},
     { id: "history", label: "History", icon: History},
   ]
@@ -49,7 +49,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
 
       {/* Navigation Menu */}
       <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => (
+        {menuItems.map((item:any) => (
       <Button
         key={item.id}
         variant={activeView === item.id ? "default" : "ghost"}

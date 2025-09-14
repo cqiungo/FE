@@ -7,35 +7,58 @@ import { CheckCircle2, Circle, CalendarIcon, Clock, ClipboardCheck } from "lucid
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import Chart from "@/components/chart"
+import type { Priority, Todo } from "@/types/todo.type"
+import { useAuthContext } from "@/context/authContext"
+const PRIORITY_COLORS: Record<Priority, string> = {
+  high: "red",
+  medium: "orange",
+  low: "green",
+};
 
-interface Todo {
-  id: number
-  text: string
-  completed: boolean
-  start: Date
-  end?: Date
-  description?: string
-  priority: "low" | "medium" | "high"
-  category: string
-  imgUrl?: string
-}
-
-const PRIORITY_COLORS = {
-  high: "bg-red-100 text-red-800 border-red-200",
-  medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  low: "bg-green-100 text-green-800 border-green-200",
-}
 
 export default function Dashboard() {
-  const [todos, setTodos] = useState<Todo[]>([
-      { id: 1, text: "Finish project report" ,completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg", description:"", start: new Date(new Date(new Date().setHours(9)).setMinutes(0)),    end: new Date(new Date(new Date().setHours(10)).setMinutes(0)), priority: "high", category: "Work" },
-      { id: 2, text: "Grocery shopping", completed: true,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" ,start:new Date(2025, 8, 15, 14, 30, 45),end: new Date(2025,8,15,20,0,0), priority: "medium", category: "Personal",  },
-      { id: 3, text: "Book flight tickets", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , start: new Date(2025,9,11,1,0,0), end: new Date(2025,9,11,5,0,0), priority: "low", category: "Travel"},
-      { id: 4, text: "Call the bank", completed: false,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , start: new Date(2025,9,11,1,0,0), end: new Date(2025,9,11,5,0,0), priority: "high", category: "Finance"},
-      { id: 5, text: "Schedule dentist appointment", completed: true,imgUrl:"https://res.cloudinary.com/dbjroxnkb/image/upload/v1751217677/samples/coffee.jpg",description:"sdhfkjshdkfjdhskdjfhkjsdf" , start: new Date(2025,9,12,1,0,0), end: new Date(2025,9,12,5,0,0), priority: "medium", category: "Health"},
-    ])
+  const [todos, setTodos] = useState<Todo[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-    
+  const {user} = useAuthContext()
+
+  useEffect(() => {
+    const fetchTodos = async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/user/${user!.id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`,
+          },
+        });
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json(); // data là object user
+        const fetchedTodos = data.todos || [];
+
+        // map và gán id tăng dần từ 0
+        const mappedTodos: Todo[] = fetchedTodos.map((todo: any, index: number) => ({
+          id: index,
+          title: todo.title,
+          description: todo.description,
+          completed: todo.completed,
+          priority: todo.priority as Priority,
+          category: todo.category,
+          image: todo.image,
+          start: new Date(todo.start),
+          end: new Date(todo.end),
+          actualTime: new Date(todo.actual || todo.start),
+        }));
+
+        setTodos(mappedTodos);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      }
+    };
+
+    fetchTodos();
+  });
+
   const isOverdue = (todo: Todo) => {
     return todo.end && todo.end < new Date() && !todo.completed
   }
@@ -47,25 +70,18 @@ export default function Dashboard() {
       return !todo.completed && daysDiff <= 7
     })
     .sort((a, b) => b.start.getTime() - a.start.getTime())
-    .slice(0, 8)
+    .slice(0, 4)
 
   // Get completed tasks (most recently completed)
   const completedTasks = todos
     .filter((todo) => todo.completed)
     .sort((a, b) => b.start.getTime() - a.start.getTime())
-    .slice(0, 8)
+    .slice(0, 2)
   const [date, setDate] = useState(new Date());
   useEffect(() => {
     const timer = setInterval(() => setDate(new Date()), 60000);
     return () => clearInterval(timer);
   }, [date]);
-  const stats = {
-    total: todos.length,
-    completed: todos.filter((t) => t.completed).length,
-    pending: todos.filter((t) => !t.completed).length,
-    overdue: todos.filter((t) => t.end && t.end < new Date() && !t.completed).length,
-    highPriority: todos.filter((t) => t.priority === "high" && !t.completed).length,
-  }
 
 
   const completed = todos.filter((t) => t.completed).length
@@ -77,7 +93,7 @@ export default function Dashboard() {
   ]
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
-      <Sidebar stats={stats} activeView="dashboard" onViewChange={(e) => {console.log(e)}} />
+      <Sidebar activeView="dashboard" onViewChange={(e) => {console.log(e)}} />
 
       <div className="flex-1 flex flex-col">
         <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} onAddTask={() => {}} />
@@ -137,7 +153,7 @@ export default function Dashboard() {
 
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-slate-900 truncate">
-                            {todo.text}
+                            {todo.title}
                           </p>
                           {todo.description && (
                             <p className="text-xs flex-wrap break-words whitespace-normal text-slate-500 mt-0.5 line-clamp-2">
@@ -165,9 +181,9 @@ export default function Dashboard() {
                           </div>
                         </div>
 
-                        {todo.imgUrl && (
+                        {todo.image && (
                           <img
-                            src={todo.imgUrl}
+                            src={todo.image}
                             alt="Task"
                             className="w-20 h-20 object-cover rounded-md flex-shrink-0"
                           />
@@ -209,7 +225,7 @@ export default function Dashboard() {
                           <div className="flex items-start gap-3">
                             <CheckCircle2 className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-600 line-through truncate">{todo.text}</p>
+                              <p className="text-sm font-medium text-slate-600 line-through truncate">{todo.title}</p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="secondary" className="text-xs opacity-75">
                                   {todo.category}

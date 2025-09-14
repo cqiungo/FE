@@ -2,7 +2,6 @@ import React from "react";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import {
   Button,
-  Checkbox,
   Form,
   Input,
   Flex,
@@ -12,15 +11,13 @@ import {
 } from "antd";
 import { authApi } from "@/api/auth.api";
 import { Link } from "react-router-dom";
-import { useNavigate } from "react-router";
-// import { useLogin } from "../hooks/useAuth";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const SignUp: React.FC = () => {
-  let navigate = useNavigate();
 
   const onFinish = async (values: any) => {
+    console.log(values)
     const user = await authApi.register(values)
     console.log(user)
   };
@@ -51,7 +48,7 @@ const SignUp: React.FC = () => {
         >
           <Form.Item
             label="Username"
-            name="username"
+            name="name"
             rules={[{ required: true, message: "Please input your Username!" }]}
           >
             <Input

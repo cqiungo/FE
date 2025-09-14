@@ -9,18 +9,20 @@ import {
   Typography,
   Card,
   Divider,
-  message,
 } from "antd";
 import { Link } from "react-router-dom";
 // import { useLogin } from "../hooks/useAuth";
-
-const { Title, Text } = Typography;
+import { authService } from "@/services/auth.service";
+import { useNavigate } from "react-router-dom";
+const {  Text } = Typography;
 
 const Login: React.FC = () => {
-//   const loginMutation = useLogin();
-
-  const onFinish = (values: any) => {
-    console.log(values)
+  const nav = useNavigate()
+  const onFinish = async (values: any) => {
+    const res = await authService.login(values);
+    if(res){
+      nav("/dashboard")
+    }
   };
 
   return (
@@ -48,13 +50,13 @@ const Login: React.FC = () => {
           onFinish={onFinish}
         >
           <Form.Item
-            label="Username"
-            name="username"
-            rules={[{ required: true, message: "Please input your Username!" }]}
+            label="Email"
+            name="email"
+            rules={[{ required: true, message: "Please input your Email!" }]}
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="Enter your username"
+              placeholder="Enter your email"
               size="large"
             />
           </Form.Item>

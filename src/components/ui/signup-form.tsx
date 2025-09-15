@@ -9,17 +9,20 @@ import {
   Card,
   Divider,
 } from "antd";
+import { useNavigate } from "react-router-dom";
 import { authApi } from "@/api/auth.api";
 import { Link } from "react-router-dom";
 
 const { Text } = Typography;
 
 const SignUp: React.FC = () => {
+  const navigate = useNavigate();
 
   const onFinish = async (values: any) => {
     console.log(values)
     const user = await authApi.register(values)
     console.log(user)
+    navigate("/dashboard"); 
   };
 
   return (

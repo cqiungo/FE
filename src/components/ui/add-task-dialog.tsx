@@ -11,8 +11,6 @@ import { Plus, CalendarIcon, X } from "lucide-react"
 import { format } from "date-fns"
 import { Dayjs } from 'dayjs';
 import { Textarea } from "./textarea";
-import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/ui/shadcn-io/dropzone';
-import { UploadIcon } from 'lucide-react';
 import { useAuthContext } from "@/context/authContext";
 import { add, addTodoWithFile } from "@/api/todo.api";
 import { Bounce, ToastContainer, toast } from "react-toastify";
@@ -31,10 +29,6 @@ export default function AddTask({setShowAddForm, onAdd}:Props) {
   const [description,setDescription] = useState("")
   const [files, setFiles] = useState<File[] | undefined>();
   const {user} =useAuthContext()
-  const handleDrop = (files: File[]) => {
-    console.log(files);
-    setFiles(files);
-  };
   const onChange: TimePickerProps['onChange'] = (value) => {
     setTime(value || undefined); 
   };
@@ -57,7 +51,6 @@ export default function AddTask({setShowAddForm, onAdd}:Props) {
       priority: selectedPriority,
       category: selectedCategory,
       actualTime: null,
-      image: "" // placeholder, BE sẽ set nếu có file
     };
 
     try {

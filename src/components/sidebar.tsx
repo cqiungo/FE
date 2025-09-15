@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Home, CheckSquare, Flag, Star, Settings, BarChart3, Menu, X, ClipboardList, Users, History } from "lucide-react"
+import { Home, Settings, BarChart3, Menu, X, ClipboardList, History, Calendar1 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useNavigate } from "react-router-dom"
 
@@ -8,7 +8,6 @@ interface SidebarProps {
   activeView: string
   onViewChange: (view: string) => void
 }
-
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const navigate = useNavigate()
@@ -16,7 +15,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const menuItems = [
     { id: "dashboard", label: "Dash Board", icon: ClipboardList, },
     { id: "taskview", label: "All Tasks", icon: Home},
-    { id: "group", label: "Group", icon: Users},
+    { id: "calendar", label: "Calendar", icon: Calendar1},
     { id: "history", label: "History", icon: History},
   ]
 

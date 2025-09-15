@@ -27,7 +27,7 @@ function App() {
           }>
           
         </Route>
-        <Route path="/taskview/calendar" element={
+        <Route path="/calendar" element={
           <RequireAuth>
             <MyCalendar></MyCalendar>
           </RequireAuth>} />

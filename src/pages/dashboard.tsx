@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -8,13 +10,18 @@ import { Header } from "@/components/header"
 import { Trash2, CheckCircle2, Circle, CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
+import dayjs from "dayjs"
+import customParseFormat from "dayjs/plugin/customParseFormat"
 import StatsCard from "@/components/ui/stats-card"
 import AddTask from "@/components/ui/add-task-dialog"
 import type { Todo, Priority } from "@/types/todo.type"
 import { useAuthContext } from "@/context/authContext"
 import Dialog from "@/components/ui/confirm-dialog"
+import EditTask from "@/components/ui/edit-task"
+import { update } from "@/api/todo.api"
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+
 const CATEGORIES = ["Personal", "Work", "Shopping", "Health", "Learning", "Other"]
 const PRIORITY_COLORS = {
   high: "bg-red-100 text-red-800 border-red-200",
@@ -31,80 +38,101 @@ export default function TodoApp() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [openDialog, setOpenDialog] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [editTask, setEditTask] = useState(false)
+  const [currentEditTodo, setCurrentEditTodo] = useState<Todo | undefined>(undefined)
+  const [loading,setLoading] = useState(false)
+  dayjs.extend(customParseFormat)
+  const { user } = useAuthContext()
 
-  dayjs.extend(customParseFormat);
-  const {user} =useAuthContext()
+  const editTodo = (updatedTodo: Todo) => {
+    setTodos(todos.map((todo) => (todo.todo_id === updatedTodo.todo_id ? updatedTodo : todo)))
+    setEditTask(false)
+    setCurrentEditTodo(undefined)
+  }
+
+  const handleEditTodo = (todo: Todo) => {
+    setCurrentEditTodo(todo)
+    setEditTask(true)
+  }
+
   const addTodo = (todo: Todo) => {
     setTodos([todo, ...todos])
     setShowAddForm(false)
   }
+
   const handleOpenDialog = (id: string) => {
     setSelectedId(id)
     setOpenDialog(true)
-  } 
+  }
+
   useEffect(() => {
-      const fetchTodos = async () => {
-        try {
-          const res = await fetch(`http://localhost:3000/user/${user!.id}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`,
-            },
-          });
+    const fetchTodos = async () => {
+      try {
+        const res = await fetch(`https://be-3-xja1.onrender.com/user/${user!.id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`,
+          },
+        })
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+        const data = await res.json()
+        const fetchedTodos = data.todos || []
+
+        // map và gán id tăng dần từ 0
+        const mappedTodos: Todo[] = fetchedTodos.map((todo: any, index: number) => ({
+          id: index,
+          todo_id: todo._id,
+          title: todo.title,
+          description: todo.description,
+          completed: todo.completed,
+          priority: todo.priority as Priority,
+          category: todo.category,
+          image: todo.image,
+          start: new Date(todo.start),
+          end: new Date(todo.end),
+          actualTime: new Date(todo.actual || todo.start),
+        }))
+
+        setTodos(mappedTodos)
+      } catch (err) {
+        console.error("Fetch error:", err)
+      }
+    }
+
+    fetchTodos()
+  }, [todos])
   
-          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-          const data = await res.json();
-          const fetchedTodos = data.todos || [];
-  
-          // map và gán id tăng dần từ 0
-          const mappedTodos: Todo[] = fetchedTodos.map((todo: any, index: number) => ({
-            id: index,
-            todo_id:todo._id,
-            title: todo.title,
-            description: todo.description,
-            completed: todo.completed,
-            priority: todo.priority as Priority,
-            category: todo.category,
-            image: todo.image,
-            start: new Date(todo.start),
-            end: new Date(todo.end),
-            actualTime: new Date(todo.actual || todo.start),
-          }));
-  
-          setTodos(mappedTodos);
-        } catch (err) {
-          console.error("Fetch error:", err);
-        }
-      };
-  
-      fetchTodos();
-    });
   const isOverdue = (todo: Todo) => {
     return todo.end && todo.end < new Date() && !todo.completed
   }
 
-  useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos))
-  }, [todos])
-  const toggleTodo = (id: number) => {
-    setTodos(todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)))
+  // useEffect(() => {
+  //   localStorage.setItem("todos", JSON.stringify(todos))
+  // }, [todos])
+
+  const toggleTodo = async (todo:any) => {
+    const res = await update(todo.todo_id,{
+          title: todo.title,
+          description:todo.description,
+          end: todo.end,
+          priority: todo.priority,
+          category: todo.category,
+          completed:!todo.completed,
+          user:user?.id
+    })
+    if(res){
+      setLoading(false)
+      setTodos(todos.map((todo) => (todo.id === todo.id ? { ...todo, completed: !todo.completed } : todo)))
+    }else{
+      setLoading(true)
+    }
+    
   }
 
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id))
-  }
-
-  const markAllCompleted = () => {
-    setTodos(todos.map((todo) => ({ ...todo, completed: true })))
-  }
-
-  const deleteCompleted = () => {
-    setTodos(todos.filter((todo) => !todo.completed))
-  }
 
   const filteredTodos = todos.filter((todo) => {
-
     const matchesSearch = (todo.title ?? "").toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = filterCategory === "all" || todo.category === filterCategory
     const matchesPriority = filterPriority === "all" || todo.priority === filterPriority
@@ -128,11 +156,20 @@ export default function TodoApp() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
-      <Dialog
-        id={selectedId || ""}
-        open={openDialog}
-        onOpen={setOpenDialog}
+      <Dialog id={selectedId || ""} open={openDialog} onOpen={setOpenDialog} />
+      {loading &&
+        <Box sx={{ display: 'flex' }}>
+          <CircularProgress />
+        </Box>
+      }
+      <EditTask
+        onEdit={editTodo}
+        id={currentEditTodo?.todo_id || ""}
+        setShowEditForm={setEditTask}
+        EditForm={editTask}
+        currentTodo={currentEditTodo}
       />
+
       <Sidebar activeView={activeView} onViewChange={setActiveView} />
 
       {/* Main Content */}
@@ -146,7 +183,7 @@ export default function TodoApp() {
           <div className="grid lg:grid-cols-3 gap-6">
             {showAddForm && (
               <div className="lg:col-span-1">
-                <AddTask setShowAddForm={setShowAddForm} onAdd={addTodo}/>
+                <AddTask setShowAddForm={setShowAddForm} onAdd={addTodo} />
               </div>
             )}
 
@@ -196,18 +233,22 @@ export default function TodoApp() {
                         <Card
                           key={todo.id}
                           className={cn(
-                            "transition-all duration-200 hover:shadow-md border-l-4",
+                            "transition-all duration-200 hover:shadow-md border-l-4 cursor-pointer",
                             todo.completed && "opacity-60",
                             todo.priority === "high" && "border-l-red-500",
                             todo.priority === "medium" && "border-l-yellow-500",
                             todo.priority === "low" && "border-l-green-500",
                             isOverdue(todo) && "bg-red-50 border-l-red-600",
                           )}
+                          onClick={() => handleEditTodo(todo)}
                         >
                           <CardContent className="p-4">
                             <div className="flex items-start gap-3">
                               <button
-                                onClick={() => toggleTodo(todo.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation() // Prevent triggering edit dialog
+                                  toggleTodo(todo)
+                                }}
                                 className="flex-shrink-0 mt-1 transition-colors hover:text-slate-700"
                               >
                                 {todo.completed ? (
@@ -230,7 +271,10 @@ export default function TodoApp() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => handleOpenDialog(todo.todo_id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation() // Prevent triggering edit dialog
+                                      handleOpenDialog(todo.todo_id)
+                                    }}
                                     className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
                                   >
                                     <Trash2 className="w-4 h-4" />

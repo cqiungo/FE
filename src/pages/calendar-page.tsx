@@ -3,18 +3,9 @@ import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import MyCalendar from "@/components/calendar-view"
 import { Outlet } from "react-router-dom";
-import type { Todo } from "@/types/todo.type";
 
-const PRIORITY_COLORS = {
-  high: "bg-red-100 text-red-800 border-red-200",
-  medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  low: "bg-green-100 text-green-800 border-green-200",
-}
 
 export default function CalendarPage() {
-  const [todos, setTodos] = useState<Todo[]>([
-    
-  ])
   const [searchQuery, setSearchQuery] = useState("")
 
   // Get recent tasks (last 7 days, not completed)

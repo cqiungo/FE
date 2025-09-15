@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Trash2, Plus, CheckCircle2, Circle, CalendarIcon, Flag, Star, Clock, Target, CheckSquare } from "lucide-react"
+import { Card, CardContent} from "@/components/ui/card"
+import { CheckCircle2, Flag, Star, Clock, Target } from "lucide-react"
 
 
 export default function StatsCard({ stats }: { stats: { total: number; completed: number; pending: number; overdue: number; highPriority: number } }) {

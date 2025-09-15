@@ -6,6 +6,7 @@ import DialogMui from '@mui/material/Dialog';
 import Button from '@mui/material/Button';
 import { remove } from '@/api/todo.api';
 import { Bounce, toast, ToastContainer } from 'react-toastify';
+import { useAuthContext } from '@/context/authContext';
 type Props = {
     id:string,
     onOpen : (x:boolean) => void;
@@ -13,8 +14,9 @@ type Props = {
 }
 
 export default function Dialog({id,onOpen,open}:Props){
+    const {user} =useAuthContext()
     const handleDelete = async ()=>{
-        const res = await remove(id)
+        const res = await remove(id,user!.id)
         if(res){
             toast.success('🦄 Xóa task thành công!', {
             position: "top-right",

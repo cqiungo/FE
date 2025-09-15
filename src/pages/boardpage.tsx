@@ -9,6 +9,7 @@ import { format } from "date-fns"
 import Chart from "@/components/chart"
 import type { Priority, Todo } from "@/types/todo.type"
 import { useAuthContext } from "@/context/authContext"
+
 const PRIORITY_COLORS: Record<Priority, string> = {
   high: "red",
   medium: "orange",
@@ -24,7 +25,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchTodos = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/user/${user!.id}`, {
+        const res = await fetch(`https://be-3-xja1.onrender.com/user/${user!.id}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -58,7 +59,7 @@ export default function Dashboard() {
 
     fetchTodos();
   });
-
+  
   const isOverdue = (todo: Todo) => {
     return todo.end && todo.end < new Date() && !todo.completed
   }

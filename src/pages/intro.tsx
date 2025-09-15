@@ -35,7 +35,7 @@ export default function Intro() {
           </div>
 
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-            <a href="http://localhost:5173/login" className="text-sm/6 font-semibold text-gray-900">
+            <a href="https://fe-one-gamma.vercel.app/login" className="text-sm/6 font-semibold text-gray-900">
               Log in <span aria-hidden="true">&rarr;</span>
             </a>
           </div>

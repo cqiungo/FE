@@ -3,7 +3,7 @@ import type {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
-} from "../types/auth.type";
+} from "../types/auth.type.ts";
 
 export const authApi = {
   login: (data: LoginRequest): Promise<LoginResponse> =>

@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://be-3-xja1.onrender.com",
+  baseURL: "https://be-3-xja1.onrender.com",
   headers: {
     "Content-Type": "application/json",
   },

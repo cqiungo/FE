@@ -9,7 +9,7 @@ export default function MyCalendar() {
   // ================= GET REMOTE EVENTS =================
   const fetchRemote = async (): Promise<ProcessedEvent[]> => {
     try {
-      const res = await fetch(`https://be-3-xja1.onrender.com/user/${user!.id}`, {
+      const res = await fetch(`https://be-3-vs4l.onrender.com/user/${user!.id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

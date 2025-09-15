@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: "https://be-3-xja1.onrender.com",
+  baseURL: "https://be-3-vs4l.onrender.com",
   headers: {
     "Content-Type": "application/json",
   },

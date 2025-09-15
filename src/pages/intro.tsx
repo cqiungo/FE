@@ -6,11 +6,10 @@ import { useNavigate } from "react-router-dom";
 const navigation = [
   { name: 'Product', href: '#' },
 ]
-const navigate = useNavigate();
 
 export default function Intro() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
+  const navigate = useNavigate();
   return (
     <div className="bg-white">
       <header className="absolute inset-x-0 top-0 z-50">
